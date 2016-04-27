@@ -1,10 +1,11 @@
 #!/bin/bash -e
 
-ps aux | grep java | grep .opends. | perl -ne 'print "$1\n" if (m/^\d+\s+(\d+)/);' | xargs -r kill -9
-ps aux | grep java | grep .opends. > /dev/null
-while [ $? -eq 0 ]
+ps aux | grep java | grep .opends. | perl -ne 'print "$1\n" if (m/^\w+\+?\s+(\d+)/);' | xargs -r kill -9
+
+RESULT=0
+until [ "${RESULT}" != "" ]
 do
+    RESULT=`ps aux | grep java | grep .opends.`
     sleep 1
-    ps aux | grep java | grep .opends. > /dev/null
 done
 
