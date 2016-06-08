@@ -1,9 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 BUILD_DIR=`pwd`
-PACKAGE_DIR="${BUILD_DIR}/build/package/OpenDJ-2.7.0"
+PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 DATETIME=`date +%Y%m%d_%H%M%S`
-SETUP_DIR="${PACKAGE_DIR}_$DATETIME"
+SETUP_DIR="${PACKAGE_DIR}_auto"
 HOSTNAME=localhost
 ADMIN_PORT=4444
 DEBUG_PORT=8000
@@ -18,18 +18,14 @@ echo "##########################################################################
 if [ -e $SETUP_DIR ]
 then
     echo $SETUP_DIR/bin/stop-ds
+    set +e
     $SETUP_DIR/bin/stop-ds
+    set -e
 else
     echo "The setup dir '$SETUP_DIR' does not exist"
 fi
 
-
-echo
-echo "##################################################################################################"
-echo "# building OpenDJ in '$BUILD_DIR'"
-echo "##################################################################################################"
-./build.sh ${*}
-
+rm -rf $SETUP_DIR
 cp -r $PACKAGE_DIR $SETUP_DIR
 
 
@@ -40,7 +36,9 @@ echo "##########################################################################
 if [ -e $SETUP_DIR/config/archived-configs ]
 then
     echo rm $SETUP_DIR/config/archived-configs/*
+    set +e
     rm $SETUP_DIR/config/archived-configs/*
+    set -e
 fi
 # TODO also clear $SETUP_DIR/.locks/*.lock ?
 
@@ -51,7 +49,8 @@ SETUP_ARGS="-d 1000"
 #fi
 
 # -O will prevent the server from starting
-$SETUP_DIR/setup --cli -w "$PASSWORD" -n -p 1389 --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS --generateSelfSignedCertificate
+#    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n" \
+$SETUP_DIR/setup --cli -w "$PASSWORD" -n -p 1389 --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS --generateSelfSignedCertificate -O
 #--httpPort 8080
 
 # import initial data

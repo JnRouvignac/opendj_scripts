@@ -1,12 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
-set -x
-
-VERSION=OpenDJ-2.7.0
 BUILD_DIR=`pwd`
-PACKAGE_DIR="${BUILD_DIR}/build/package/${VERSION}"
+PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 DATETIME=`date +%Y%m%d_%H%M%S`
-BASE_DIR="/ssddata"
+BASE_DIR="target"
 SETUP_DIR="$BASE_DIR/${PACKAGE_DIR}_$DATETIME"
 SERVER_PID_FILE="logs/server.pid"
 HOSTNAME=jeannoel-laptop
@@ -18,9 +15,9 @@ BASE_DN="dc=example,dc=com"
 #   RS means: deploy a RS only node
 # DSRS means: deploy a node which is both DS and RS
 REPLICA_DIRS=( \
-${VERSION}_0_DSRS \
-${VERSION}_1_RS \
-${VERSION}_2_DS \
+               opendj_0_DSRS \
+               opendj_1_RS \
+               opendj_2_DS \
              )
 DEBUG_TARGETS=( \
 #org.opends.server.replication.server.ReplicationServerDomain \
@@ -31,7 +28,7 @@ DEBUG_TARGETS=( \
 
 
 
-rm -rf $BASE_DIR/${VERSION}*
+rm -rf $BASE_DIR/opendj*
 
 DIR="$BASE_DIR/${REPLICA_DIRS[0]}"
 unset IS_DSRS
