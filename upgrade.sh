@@ -10,7 +10,7 @@ ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.0.0-SNAPSHOT.zip"
 
-ZIP=${ZIP_2_6_0}
+ZIP=${ZIP_3_0_0}
 ZIP2=${ZIP_MASTER}
 
 PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
@@ -104,7 +104,7 @@ then
 # CaseIgnoreOrderingMatchingRule OctetStringOrderingMatchingRule IntegerOrderingMatchingRule UUIDOrderingMatchingRule GeneralizedTimeOrderingMatchingRule CaseExactOrderingMatchingRule NumericStringOrderingMatchingRule
 # HistoricalCsnOrderingMatchingRule
 
-    $SETUP_DIR/bin/dsconfig create-local-db-index \
+    $SETUP_DIR/bin/dsconfig create-backend-index \
           --hostname "${HOSTNAME}" -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X \
           --backend-name userRoot \
           --set index-type:equality \
@@ -132,7 +132,6 @@ END_OF_COMMAND_INPUT
 
     $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -T -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
 
-read
    $SETUP_DIR/bin/stop-ds
 
    unzip -q ${ZIP2} -d ${SETUP_DIR}
