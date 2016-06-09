@@ -1,4 +1,8 @@
 #!/bin/bash -ex
+# -e will fail the script if any command fails. It might be too constraining for some scripts
+# -x echoes each command before running it. It can be disabled temporarily with 'set +x'.
+
+PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 
 BUILD_DIR=`pwd`
 PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
