@@ -104,33 +104,33 @@ then
 # CaseIgnoreOrderingMatchingRule OctetStringOrderingMatchingRule IntegerOrderingMatchingRule UUIDOrderingMatchingRule GeneralizedTimeOrderingMatchingRule CaseExactOrderingMatchingRule NumericStringOrderingMatchingRule
 # HistoricalCsnOrderingMatchingRule
 
-    $SETUP_DIR/bin/dsconfig create-backend-index \
-          --hostname "${HOSTNAME}" -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X \
-          --backend-name userRoot \
-          --set index-type:equality \
-          --type generic \
-          --index-name seealso \
-          --no-prompt
+#    $SETUP_DIR/bin/dsconfig create-backend-index \
+#          --hostname "${HOSTNAME}" -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X \
+#          --backend-name userRoot \
+#          --set index-type:equality \
+#          --type generic \
+#          --index-name seealso \
+#          --no-prompt
 
-    $SETUP_DIR/bin/rebuild-index -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X --baseDN "$BASE_DN" --index seealso
+#    $SETUP_DIR/bin/rebuild-index -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X --baseDN "$BASE_DN" --index seealso
 
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -a <<END_OF_COMMAND_INPUT
-dn: cn=A1,dc=example,dc=com
-objectclass:top
-objectclass:organizationalperson
-objectclass:inetorgperson
-objectclass:person
-sn:User
-cn:Test User
-userPassword:secret12
-description:1
-description:2
-seealso:cn=test
-mail:bla@example.com
-telephonenumber:+33165990803
-END_OF_COMMAND_INPUT
+#target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -a <<END_OF_COMMAND_INPUT
+#dn: cn=A1,dc=example,dc=com
+#objectclass:top
+#objectclass:organizationalperson
+#objectclass:inetorgperson
+#objectclass:person
+#sn:User
+#cn:Test User
+#userPassword:secret12
+#description:1
+#description:2
+#seealso:cn=test
+#mail:bla@example.com
+#telephonenumber:+33165990803
+#END_OF_COMMAND_INPUT
 
-    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -T -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
+#    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -T -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
 
    $SETUP_DIR/bin/stop-ds
 
@@ -138,7 +138,8 @@ END_OF_COMMAND_INPUT
    rsync --archive ${SETUP_DIR}/opendj/ ${SETUP_DIR}
 
 #read
-    $SETUP_DIR/upgrade -n --force
+    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
+       $SETUP_DIR/upgrade -n --force
 
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
