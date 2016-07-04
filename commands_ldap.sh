@@ -7,6 +7,8 @@ curl "http://localhost:8080/users/bjensen?_prettyPrint=true"
 target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "&"
 curl "http://localhost:8080/users?_queryFilter=true&_prettyPrint=true"
 
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "cn=schema" -s base "(objectclass=*)" +
+
 
 # LDAP modify
 # create user
@@ -37,6 +39,18 @@ target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w a
 target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/deluser.ldif
 # display the newly added user
 target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "(uid=newuser)"
+
+# modify, delete+add
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin <<END_OF_COMMAND_INPUT
+dn: cn=schema
+changetype: modify
+delete: attributeTypes
+attributeTypes: ( 1.3.6.1.4.1.26027.1.1.169 NAME 'ds-task-import-ldif-file' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'OpenDS Directory Server' )
+-
+
+add: attributeTypes
+attributeTypes: ( 1.3.6.1.4.1.26027.1.1.169 NAME 'ds-task-import-ldif-file' EQUALITY caseExactMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 X-ORIGIN 'OpenDS Directory Server' X-COUCOU 'JNR was here')
+END_OF_COMMAND_INPUT
 
 
 # REST using authentication
