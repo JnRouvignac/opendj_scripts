@@ -7,10 +7,10 @@ PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 BUILD_DIR=`pwd`
 PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 DATETIME=`date +%Y%m%d_%H%M%S`
-BASE_DIR="target"
+BASE_DIR="${BUILD_DIR}/target"
 SETUP_DIR="$BASE_DIR/${PACKAGE_DIR}_$DATETIME"
 SERVER_PID_FILE="logs/server.pid"
-HOSTNAME=jeannoel-laptop
+HOSTNAME=localhost
 BIND_DN="cn=Directory Manager"
 PASSWORD=admin
 BASE_DN="dc=example,dc=com"
@@ -115,10 +115,8 @@ do
         fi
         cd ..
 
-        echo rm -rf $DIR
         rm -rf $DIR
     fi
-    echo cp -r $PACKAGE_DIR $DIR
     cp -r $PACKAGE_DIR $DIR
 
 
@@ -163,13 +161,13 @@ do
                      set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
 
     # enable debug logs + create debug targets
-    bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                     set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
-    for CLAZZ in ${DEBUG_TARGETS}
-    do
-        bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                     create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
-    done
+#    bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+#                     set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
+#    for CLAZZ in ${DEBUG_TARGETS}
+#    do
+#        bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+#                     create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
+#    done
 
     if [ -n "${DEBUG_TARGETS}"  -a  ${#DEBUG_TARGETS[@]} -ne 0 ]
     then
@@ -238,7 +236,7 @@ echo "##########################################################################
 echo "# Initializing replication"
 echo "##################################################################################################"
 IDX=0
-DIR=${REPLICA_DIRS[$IDX]}
+DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
 cd $DIR
 
 # Next command is only useful when there is more than one DS
