@@ -7,7 +7,7 @@ PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 BUILD_DIR=`pwd`
 PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 DATETIME=`date +%Y%m%d_%H%M%S`
-BASE_DIR="${BUILD_DIR}/target"
+BASE_DIR="target"
 SETUP_DIR="$BASE_DIR/${PACKAGE_DIR}_$DATETIME"
 SERVER_PID_FILE="logs/server.pid"
 HOSTNAME=localhost
@@ -17,11 +17,11 @@ BASE_DN="dc=example,dc=com"
 # Naming is important here:
 # DS   means: deploy a DS only node
 #   RS means: deploy a RS only node
-# DSRS means: deploy a node which is both DS and RS
+# DSRS means: deploy a combined DS-RS node 
 REPLICA_DIRS=( \
                opendj_0_DSRS \
-               opendj_1_RS \
-               opendj_2_DS \
+               opendj_1_DS \
+               opendj_2_RS \
              )
 DEBUG_TARGETS=( \
 #org.opends.server.replication.server.ReplicationServerDomain \
@@ -70,6 +70,7 @@ then
 fi
 
 
+NB_DS=0
 for IDX in ${!REPLICA_DIRS[*]}
 do
     DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
@@ -84,10 +85,12 @@ do
         IS_DSRS=1
         IS_DS=1
         IS_RS=1
+        NB_DS=$(($NB_DS + 1))
     elif [[ "$DIR" == *DS* ]]
     then
         IS_DS_ONLY=1
         IS_DS=1
+        NB_DS=$(($NB_DS + 1))
     elif [[ "$DIR" == *RS* ]]
     then
         IS_RS_ONLY=1
@@ -225,7 +228,7 @@ do
     fi
 
 
-    cd ..
+    cd ../..
 done
 
 # let last node finish startup
@@ -239,10 +242,12 @@ IDX=0
 DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
 cd $DIR
 
-# Next command is only useful when there is more than one DS
-# TODO need validation there is more than one DS
-bin/dsreplication    initialize-all --adminUID admin \
-                     -h $HOSTNAME -p 450$IDX -b "$BASE_DN" -w $PASSWORD --trustAll --no-prompt
+if [ ${NB_DS} -gt 1 ]
+then
+    # Next command is only useful when there is more than one DS
+    bin/dsreplication    initialize-all --adminUID admin \
+                         -h $HOSTNAME -p 450$IDX -b "$BASE_DN" -w $PASSWORD --trustAll --no-prompt
+fi
 
-cd ..
+cd ../..
 
