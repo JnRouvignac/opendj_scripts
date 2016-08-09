@@ -84,6 +84,7 @@ bin/modrate -p 1500 -D "cn=directory manager" -w admin -F -c 4 -t 4 -b "uid=user
 target/package/opendj_auto/bin/status        -w admin -X    -D "cn=Directory Manager"
 # replication
 target/package/opendj_auto/bin/dsreplication -w admin -X -n -b "dc=example,dc=com" status
+target/package/opendj_auto/bin/control-panel -w admin -X    -D "cn=Directory Manager" 
 
 
 # Processing time test
