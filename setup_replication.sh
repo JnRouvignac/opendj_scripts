@@ -17,7 +17,7 @@ BASE_DN="dc=example,dc=com"
 # Naming is important here:
 # DS   means: deploy a DS only node
 #   RS means: deploy a RS only node
-# DSRS means: deploy a combined DS-RS node 
+# DSRS means: deploy a combined DS-RS node
 REPLICA_DIRS=( \
                opendj_0_DSRS \
                opendj_1_DS \
@@ -203,6 +203,7 @@ do
         echo "##################################################################################################"
         echo "# Creating replication link: ${REPLICA_DIRS[0]} => ${REPLICA_DIRS[$IDX]}"
         echo "##################################################################################################"
+#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
         bin/dsreplication enable \
             --adminUID admin --adminPassword $PASSWORD --baseDN "$BASE_DN" --trustAll --no-prompt \
             --host1 $HOSTNAME     --port1 4500    --bindDN1 "$BIND_DN" --bindPassword1 $PASSWORD $DSREPLICATION_ENABLE_ARGS_0 \
@@ -245,8 +246,9 @@ cd $DIR
 if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
-    bin/dsreplication    initialize-all --adminUID admin \
-                         -h $HOSTNAME -p 450$IDX -b "$BASE_DN" -w $PASSWORD --trustAll --no-prompt
+#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
+    bin/dsreplication    initialize-all --adminUID admin  -w $PASSWORD \
+                         -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
 fi
 
 cd ../..
