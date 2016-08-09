@@ -63,10 +63,6 @@ fi
 # TODO also clear $SETUP_DIR/.locks/*.lock ?
 
 SETUP_ARGS="-d 1000"
-#if [ -n "$DEBUG_PORT" ]
-#then
-#    SETUP_ARGS="$SETUP_ARGS -O"
-#fi
 if [ "{$ZIP}" != "${ZIP_2_5_0}" ]
 then
     SETUP_ARGS="${SETUP_ARGS} --acceptLicense"
