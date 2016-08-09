@@ -6,6 +6,12 @@ PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 
 BUILD_DIR=`pwd`
 PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
+ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
+ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
+ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
+ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.0.0-SNAPSHOT.zip"
+ZIP=${ZIP_MASTER}
+
 DATETIME=`date +%Y%m%d_%H%M%S`
 SETUP_DIR="${PACKAGE_DIR}_auto"
 HOSTNAME=localhost
@@ -29,7 +35,13 @@ else
 fi
 
 rm -rf $SETUP_DIR
-cp -r $PACKAGE_DIR $SETUP_DIR
+unzip -q ${ZIP} -d ${SETUP_DIR}
+if [ "${ZIP}" == "${ZIP_2_5_0}" ]
+then
+   mv ${SETUP_DIR}/OpenDJ-2.5.0-Xpress1/* ${SETUP_DIR}
+else
+   mv ${SETUP_DIR}/opendj/* ${SETUP_DIR}
+fi
 
 
 echo
@@ -45,10 +57,10 @@ fi
 # TODO also clear $SETUP_DIR/.locks/*.lock ?
 
 SETUP_ARGS="-d 1000"
-#if [ -n "$DEBUG_PORT" ]
-#then
-#    SETUP_ARGS="$SETUP_ARGS -O"
-#fi
+if [ "{$ZIP}" != "${ZIP_2_5_0}" ]
+then
+    SETUP_ARGS="${SETUP_ARGS} --acceptLicense"
+fi
 
 # -O will prevent the server from starting
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
@@ -56,10 +68,13 @@ $SETUP_DIR/setup --cli -w "$PASSWORD" -n -p 1389 --adminConnectorPort "$ADMIN_PO
 #--httpPort 8080
 
 # import initial data
+#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
 #$SETUP_DIR/bin/import-ldif \
 #        --backendID userRoot \
 #        --ldifFile ~/ldif/Example.ldif \
 #        --clearBackend \
+#        --skipfile ${SETUP_DIR}/skipped --rejectfile ${SETUP_DIR}/rejected \
+#        --excludefilter objectclass=groupOfUniqueNames
 #        -D "cn=Directory Manager" -w admin
 
 if [ -n "$DEBUG_PORT" ]
