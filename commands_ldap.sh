@@ -1,13 +1,13 @@
 #!/bin/bash -e
 
 # LDAP search
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "(uid=bjensen)"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "dc=example,dc=com" "(uid=bjensen)"
 curl "http://localhost:8080/api/users/bjensen?_prettyPrint=true"
 
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "&"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "dc=example,dc=com" "&"
 curl "http://localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
 
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "cn=schema" -s base "(objectclass=*)" +
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "cn=schema" -s base "(objectclass=*)" +
 
 
 # LDAP modify
@@ -28,17 +28,17 @@ mail:bla@example.com
 telephonenumber:+33165990803
 END_OF_COMMAND_INPUT
 # add description attribute
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/newdesc.ldif
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/newdesc.ldif
 # modify description 1 attribute
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/moddesc1.ldif
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/moddesc1.ldif
 # modify description 2 attribute
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/moddesc2.ldif
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/moddesc2.ldif
 # make description attribute multivalued
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/multivalueddesc.ldif
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/multivalueddesc.ldif
 # delete user
-target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin    -f ~/ldif/deluser.ldif
+target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/deluser.ldif
 # display the newly added user
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "(uid=newuser)"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "dc=example,dc=com" "(uid=newuser)"
 
 # modify, delete+add
 target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin <<END_OF_COMMAND_INPUT
@@ -75,8 +75,8 @@ target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Dire
 target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w admin -X -n  create-debug-target         --publisher-name "File-Based Debug Logger"  --set debug-level:all --type generic --target-name org.opends.server.api
 
 # stats / Performance
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin  -T -b "cn=monitor" "(objectClass=ds-connectionhandler-statistics-monitor-entry)"
-target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin  -T -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "cn=monitor" "(objectClass=ds-connectionhandler-statistics-monitor-entry)"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
 bin/modrate -p 1500 -D "cn=directory manager" -w admin -F -c 4 -t 4 -b "uid=user.%d,ou=people,dc=example,dc=com"     -g "rand(0,2000)" -g "randstr(16)" 'description:%2$s'
 
 
@@ -97,11 +97,11 @@ for i in {5..12}; do grep conn=${i} target/package/opendj_auto/logs/access | per
 
 
 target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -f ~/ldif/OPEND-948_aci.ldif
-target/package/opendj_auto/bin/ldapsearch -p 1389 -T -b "dc=example,dc=com" "&"
-target/package/opendj_auto/bin/ldapsearch -p 1389 -T -b "cn=this does not exist,ou=people,dc=example,dc=com" "objectclass=*"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -b "dc=example,dc=com" "&"
+target/package/opendj_auto/bin/ldapsearch -p 1389 -b "cn=this does not exist,ou=people,dc=example,dc=com" "objectclass=*"
 target/package/opendj_auto/bin/ldapdelete -p 1389 "uid=user.9,ou=people,dc=example,dc=com"
 target/package/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_modify_user_entry.ldif
-target/package/opendj_auto/bin/ldapsearch -p 1389 -T -b "ou=people,dc=example,dc=com" "objectclass=*" debugsearchindex
+target/package/opendj_auto/bin/ldapsearch -p 1389 -b "ou=people,dc=example,dc=com" "objectclass=*" debugsearchindex
 target/package/opendj_auto/bin/ldapmodify -p 1389 -a -f ~/ldif/OPEND-948_existing_user_entry.ldif
 
 # replication
@@ -109,15 +109,15 @@ target/package/opendj_auto/bin/ldapmodify -p 1389 -a -f ~/ldif/OPEND-948_existin
 bin/modrate -p 1500 -D "cn=directory manager" -w admin --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
             -b "uid=user.%d,ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:%2$s'
 # search on changelog
-target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -T -b "cn=changelog" "&" "*" "+" | less
+target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -b "cn=changelog" "&" "*" "+" | less
 # persistent search on changelog
-target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -C ps:all -T -b "cn=changelog" "&" "(objectclass=*)" | less
+target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -C ps:all -b "cn=changelog" "&" "(objectclass=*)" | less
 # search on changelog with changenumber
-target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -T -b "cn=changelog" "changenumber>=1" "*" "+"
+target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -b "cn=changelog" "changenumber>=1" "*" "+"
 # search on changelog with changelogcookie
-target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -T -b "cn=changelog" "changelogcookie=...cookie..." "*" "+"
+target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -b "cn=changelog" "changelogcookie=...cookie..." "*" "+"
 # search on lastchangenumber virtual attribute
-target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -T -b "" -s base "&" lastchangenumber
+target/package/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w admin -b "" -s base "&" lastchangenumber
 
 
 

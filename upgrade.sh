@@ -127,7 +127,7 @@ then
 #telephonenumber:+33165990803
 #END_OF_COMMAND_INPUT
 
-#    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -T -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
+#    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
 
    $SETUP_DIR/bin/stop-ds
 
@@ -141,7 +141,7 @@ then
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
-    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -T -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
+    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
 fi
 
 cd $BUILD_DIR
