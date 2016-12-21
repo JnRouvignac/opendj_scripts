@@ -49,34 +49,38 @@ echo
 echo "##################################################################################################"
 echo "# setting up OpenDJ in '$SETUP_DIR'"
 echo "##################################################################################################"
-if [ -e ${SETUP_DIR}/config/archived-configs ]
-then
-    set +e
-    rm ${SETUP_DIR}/config/archived-configs/*
-    set -e
-fi
-# TODO also clear $SETUP_DIR/.locks/*.lock ?
 
-SETUP_ARGS="-d 1000"
-if [ "{$ZIP}" != "${ZIP_2_5_0}" ]
+USE_IMPORT=true
+if [ "${USE_IMPORT}" = false ]
+then
+    SETUP_ARGS="-d 1000"
+fi
+
+if [ "${ZIP}" != "${ZIP_2_5_0}" ]
 then
     SETUP_ARGS="${SETUP_ARGS} --acceptLicense"
 fi
+
 
 # -O will prevent the server from starting
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
 $SETUP_DIR/setup --cli -w "$PASSWORD" -n -p 1389 --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS --generateSelfSignedCertificate -O
 #--httpPort 8080
 
-# import initial data
+
+if [ "${USE_IMPORT}" = true ]
+then
+    # import initial data
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
-#$SETUP_DIR/bin/import-ldif \
-#        --backendID userRoot \
-#        --ldifFile ~/ldif/Example.ldif \
-#        --clearBackend \
-#        --skipfile ${SETUP_DIR}/skipped --rejectfile ${SETUP_DIR}/rejected \
-#        --excludefilter objectclass=groupOfUniqueNames
-#        -D "cn=Directory Manager" -w admin
+    $SETUP_DIR/bin/import-ldif \
+            --backendID userRoot \
+            --ldifFile ~/ldif/Example.ldif \
+            --clearBackend \
+            --skipfile ${SETUP_DIR}/skipped --rejectfile ${SETUP_DIR}/rejected \
+            --offline
+#           -D "$BIND_DN" -w $PASSWORD
+fi
+
 
 if [ -n "$DEBUG_PORT" ]
 then
