@@ -9,6 +9,7 @@ PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
 ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
+ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.0.0-SNAPSHOT.zip"
 ZIP=${ZIP_MASTER}
 
