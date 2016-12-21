@@ -82,6 +82,10 @@ then
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
+    # enable http handler
+    $SETUP_DIR/bin/dsconfig     -h $HOSTNAME -p 4444 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+                                set-connection-handler-prop --handler-name "HTTP Connection Handler" --set enabled:true \
+
     # start jdb on debug port to catch first debug session
     # then exit as fast as possible
     while true

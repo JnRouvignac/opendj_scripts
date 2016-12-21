@@ -2,10 +2,10 @@
 
 # LDAP search
 target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "(uid=bjensen)"
-curl "http://localhost:8080/users/bjensen?_prettyPrint=true"
+curl "http://localhost:8080/api/users/bjensen?_prettyPrint=true"
 
 target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "dc=example,dc=com" "&"
-curl "http://localhost:8080/users?_queryFilter=true&_prettyPrint=true"
+curl "http://localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
 
 target/package/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w admin -T -b "cn=schema" -s base "(objectclass=*)" +
 
@@ -54,9 +54,9 @@ END_OF_COMMAND_INPUT
 
 
 # REST using authentication
-curl --header "X-OpenIDM-Username: name" --header "X-OpenIDM-Password: pass" "http://localhost:8080/users/bjensen?_prettyPrint=true"
-curl "http://bjensen:hifalutin@localhost:8080/users?_queryFilter=true&_prettyPrint=true"
-curl "http://bjensen:hifalutin@localhost:8080/users/newuser?_prettyPrint=true"
+curl --header "X-OpenIDM-Username: name" --header "X-OpenIDM-Password: pass" "http://localhost:8080/api/users/bjensen?_prettyPrint=true"
+curl "http://bjensen:hifalutin@localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
+curl "http://bjensen:hifalutin@localhost:8080/api/users/newuser?_prettyPrint=true"
 
 
 # dsconfig HTTP Connection Handler
@@ -92,7 +92,7 @@ target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Dire
 target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w admin -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
 target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w admin -X -n  set-log-publisher-prop      --publisher-name "File-Based HTTP Access Logger" --set enabled:true
 target/package/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w admin -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set suppress-internal-operations:false
-curl "http://bjensen:hifalutin@localhost:8080/users?_queryFilter=true&_prettyPrint=true"
+curl "http://bjensen:hifalutin@localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
 for i in {5..12}; do grep conn=${i} target/package/opendj_auto/logs/access | perl -ne 'print "$1\n" if (m/etime=(\d+)/);' | paste -sd+ | bc; done
 
 
