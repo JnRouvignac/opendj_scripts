@@ -20,8 +20,7 @@ BASE_DN="dc=example,dc=com"
 # DSRS means: deploy a combined DS-RS node
 REPLICA_DIRS=( \
                opendj_0_DSRS \
-               opendj_1_DS \
-               opendj_2_RS \
+               opendj_1_DSRS
              )
 DEBUG_TARGETS=( \
 #org.opends.server.replication.server.ReplicationServerDomain \
@@ -161,9 +160,11 @@ do
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
 
+    # add proxy-auth privilege
     # enable combined logs
     # keep only 1 file for logs/access to avoid staturating the disk
     $DIR/bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+                          set-root-dn-prop               --add default-root-privilege-name:proxied-auth
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
 END_OF_COMMAND_INPUT
@@ -254,4 +255,16 @@ then
                          -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
 fi
 
+exit
+
+$DIR/bin/dsconfig     -h $HOSTNAME -p 4500 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+                              delete-backend                     --backend-name userRoot
+                              set-trust-manager-provider-prop    --provider-name "Blind Trust" --set enabled:true
+                              create-service-discovery-mechanism --type replication --mechanism-name replication-service  --set replication-server:$HOSTNAME:1501 --set "trust-manager-provider:Blind Trust" \
+                                                                 --set bind-dn:"$BIND_DN" --set bind-password:$PASSWORD
+                              create-service-discovery-mechanism --type static      --mechanism-name static-service \
+                                                                 --set primary-server:$HOSTNAME:1501  --set primary-server:$HOSTNAME:1502
+                              create-backend                     --type proxy       --backend-name proxy  --set enabled:true \
+                                                                 --set proxy-user-dn:"$BIND_DN" --set proxy-user-password:$PASSWORD --set route-all:true --set service-discovery-mechanism:replication-service
+END_OF_COMMAND_INPUT
 
