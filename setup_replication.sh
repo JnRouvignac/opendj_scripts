@@ -69,7 +69,6 @@ then
     fi
 fi
 
-
 NB_DS=0
 for IDX in ${!REPLICA_DIRS[*]}
 do
@@ -102,12 +101,11 @@ do
     ###################################
     if [ -e "$DIR" ]
     then
-        cd $DIR
         echo
         echo "##################################################################################################"
         echo "# Stopping server $DIR"
         echo "##################################################################################################"
-        bin/stop-ds
+        $DIR/bin/stop-ds
         if [ -e $SERVER_PID_FILE ]
         then
             SERVER_PID=`cat $SERVER_PID_FILE`
@@ -116,7 +114,6 @@ do
             kill -KILL $SERVER_PID
             set -e
         fi
-        cd ..
 
         rm -rf $DIR
     fi
@@ -126,7 +123,6 @@ do
     ###################################
     # Setup
     ###################################
-    cd $DIR
     echo
     echo "##################################################################################################"
     echo "# Setting up and starting server $DIR, debugging on port 800$IDX"
@@ -135,11 +131,11 @@ do
     if [ -n ${IS_DS} ]
     then
         # import initial data
-        # bin/import-ldif \
-        #         --backendID userRoot \
-        #         --ldifFile ~/ldif/Example.ldif \
-        #         --clearBackend
-        #         # -D "cn=Directory Manager" -w admin
+        # $DIR/bin/import-ldif \
+        #              --backendID userRoot \
+        #              --ldifFile ~/ldif/Example.ldif \
+        #              --clearBackend
+        #              # -D "cn=Directory Manager" -w admin
         if [ -z "${DATA_INITIALIZED}" ]
         then
             SETUP_ARGS="$SETUP_ARGS -d 1000"
@@ -151,33 +147,33 @@ do
     then
         : # empty for now
     fi
-    ./setup --cli -D "$BIND_DN" -w $PASSWORD -n -p 150$IDX --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
+    $DIR/setup --cli -n -h $HOSTNAME -p 150$IDX -D "$BIND_DN" -w $PASSWORD --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
 
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" bin/start-ds
+    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
 
     # enable combined logs
-    bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                     set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
     # keep only 1 file for logs/access to avoid staturating the disk
-    bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                     set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
+    $DIR/bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+                          set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
+                          set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
+END_OF_COMMAND_INPUT
 
     # enable debug logs + create debug targets
-#    bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-#                     set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
+#    $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+#                      set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
 #    for CLAZZ in ${DEBUG_TARGETS}
 #    do
-#        bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-#                     create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
+#        $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+#                          create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
 #    done
 
     if [ -n "${DEBUG_TARGETS}"  -a  ${#DEBUG_TARGETS[@]} -ne 0 ]
     then
         # need to restart the server for the debug log changes to take effect. @see OPENDJ-1289
-        bin/stop-ds
+        $DIR/bin/stop-ds
         sleep 2
-        OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" bin/start-ds
+        OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     fi
 
 
@@ -204,10 +200,10 @@ do
         echo "# Creating replication link: ${REPLICA_DIRS[0]} => ${REPLICA_DIRS[$IDX]}"
         echo "##################################################################################################"
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
-        bin/dsreplication enable \
-            --adminUID admin --adminPassword $PASSWORD --baseDN "$BASE_DN" --trustAll --no-prompt \
-            --host1 $HOSTNAME     --port1 4500    --bindDN1 "$BIND_DN" --bindPassword1 $PASSWORD $DSREPLICATION_ENABLE_ARGS_0 \
-            --host2 $HOSTNAME     --port2 450$IDX --bindDN2 "$BIND_DN" --bindPassword2 $PASSWORD $DSREPLICATION_ENABLE_ARGS
+        $DIR/bin/dsreplication enable \
+                 --adminUID admin --adminPassword $PASSWORD --baseDN "$BASE_DN" --trustAll --no-prompt \
+                 --host1 $HOSTNAME     --port1 4500    --bindDN1 "$BIND_DN" --bindPassword1 $PASSWORD $DSREPLICATION_ENABLE_ARGS_0 \
+                 --host2 $HOSTNAME     --port2 450$IDX --bindDN2 "$BIND_DN" --bindPassword2 $PASSWORD $DSREPLICATION_ENABLE_ARGS
         echo "Done."
 
         echo
@@ -216,20 +212,17 @@ do
         echo "##################################################################################################"
         if [ -n "${IS_RS}" ]
         then
-            bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                         set-replication-server-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX
+            $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+                              set-replication-server-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX
         fi
         if [ -n "${IS_DS}" ]
         then
-            bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                         set-replication-domain-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX  --domain-name dc=example,dc=com
+            $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+                              set-replication-domain-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX  --domain-name dc=example,dc=com
         fi
 
         echo "Done."
     fi
-
-
-    cd ../..
 done
 
 # let last node finish startup
@@ -241,15 +234,13 @@ echo "# Initializing replication"
 echo "##################################################################################################"
 IDX=0
 DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
-cd $DIR
 
 if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
-    bin/dsreplication    initialize-all --adminUID admin  -w $PASSWORD \
+    $DIR/bin/dsreplication    initialize-all --adminUID admin  -w $PASSWORD \
                          -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
 fi
 
-cd ../..
 
