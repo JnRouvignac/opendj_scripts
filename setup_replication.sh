@@ -12,7 +12,7 @@ SETUP_DIR="$BASE_DIR/${PACKAGE_DIR}_$DATETIME"
 SERVER_PID_FILE="logs/server.pid"
 HOSTNAME=localhost
 BIND_DN="cn=Directory Manager"
-PASSWORD=admin
+PASSWORD=password
 BASE_DN="dc=example,dc=com"
 # Naming is important here:
 # DS   means: deploy a DS only node
@@ -147,7 +147,8 @@ do
     then
         : # empty for now
     fi
-    $DIR/setup --cli -n -h $HOSTNAME -p 150$IDX -D "$BIND_DN" -w $PASSWORD --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
+    # OpenDJ < 4.0: add --cli -n
+    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
 
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug

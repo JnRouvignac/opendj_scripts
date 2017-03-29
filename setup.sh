@@ -10,7 +10,8 @@ ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
 ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
-ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.0.0-SNAPSHOT.zip"
+ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
+ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.1.0-SNAPSHOT.zip"
 ZIP=${ZIP_MASTER}
 
 DATETIME=`date +%Y%m%d_%H%M%S`
@@ -19,7 +20,7 @@ HOSTNAME=localhost
 ADMIN_PORT=4444
 DEBUG_PORT=8000
 BIND_DN="cn=Directory Manager"
-PASSWORD=admin
+PASSWORD=password
 BASE_DN="dc=example,dc=com"
 
 
@@ -63,9 +64,9 @@ fi
 
 
 # -O will prevent the server from starting
+# OpenDJ < 4.0: add --cli -n
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
-$SETUP_DIR/setup --cli -w "$PASSWORD" -n -p 1389 --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS --generateSelfSignedCertificate -O
-#--httpPort 8080
+$SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
 
 
 if [ "${USE_IMPORT}" = true ]
@@ -86,10 +87,6 @@ if [ -n "$DEBUG_PORT" ]
 then
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
-
-    # enable http handler
-    $SETUP_DIR/bin/dsconfig     -h $HOSTNAME -p 4444 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                                set-connection-handler-prop --handler-name "HTTP Connection Handler" --set enabled:true \
 
     # start jdb on debug port to catch first debug session
     # then exit as fast as possible
