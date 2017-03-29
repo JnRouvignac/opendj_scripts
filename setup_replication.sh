@@ -29,10 +29,12 @@ DEBUG_TARGETS=( \
 #org.opends.server.replication.service.ReplicationDomain \
 #org.opends.server.replication.protocol.Session \
               )
+TOPOLOGY_TRUSTSTORE=target/replication_topology_truststore
 
 
 
 rm -rf $BASE_DIR/opendj*
+rm  -f $TOPOLOGY_TRUSTSTORE
 
 DIR="$BASE_DIR/${REPLICA_DIRS[0]}"
 unset IS_DSRS
@@ -150,6 +152,12 @@ do
     # OpenDJ < 4.0: add --cli -n
     $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
 
+    rm -f $DIR/rs$IDX.cert
+    # export certificate from server
+    keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
+    # import certificate from the server into the topology truststore
+    keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass password -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
+
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
 
@@ -225,6 +233,8 @@ END_OF_COMMAND_INPUT
         echo "Done."
     fi
 done
+
+keytool -noprompt -list -keystore $TOPOLOGY_TRUSTSTORE
 
 # let last node finish startup
 sleep 10
