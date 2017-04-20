@@ -9,7 +9,8 @@ ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
 ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
-ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.0.0-SNAPSHOT.zip"
+ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
+ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.1.0-SNAPSHOT.zip"
 
 ZIP=${ZIP_3_5_0}
 ZIP2=${ZIP_MASTER}
@@ -21,7 +22,7 @@ HOSTNAME=localhost
 ADMIN_PORT=4444
 DEBUG_PORT=8000
 BIND_DN="cn=Directory Manager"
-PASSWORD=admin
+PASSWORD=password
 BASE_DN="dc=example,dc=com"
 
 
@@ -96,7 +97,6 @@ then
 #          --type generic \
 #          --index-name upgrade_me \
 #          --no-prompt
-#read
 # caseIgnoreMatch octetStringMatch integerOrderingMatch uuidOrderingMatch generalizedTimeOrderingMatch caseExactMatch 
 # CaseIgnoreOrderingMatchingRule OctetStringOrderingMatchingRule IntegerOrderingMatchingRule UUIDOrderingMatchingRule GeneralizedTimeOrderingMatchingRule CaseExactOrderingMatchingRule NumericStringOrderingMatchingRule
 # HistoricalCsnOrderingMatchingRule
