@@ -5,10 +5,16 @@
 PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 
 BUILD_DIR=`pwd`
-PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
+ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
+ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
+ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
+ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
+ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
+ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
+ZIP=${ZIP_MASTER}
+
 DATETIME=`date +%Y%m%d_%H%M%S`
 BASE_DIR="target"
-SETUP_DIR="$BASE_DIR/${PACKAGE_DIR}_$DATETIME"
 SERVER_PID_FILE="logs/server.pid"
 HOSTNAME=localhost
 BIND_DN="cn=Directory Manager"
@@ -32,7 +38,7 @@ TOPOLOGY_TRUSTSTORE=target/replication_topology_truststore
 
 
 
-rm -rf $BASE_DIR/opendj*
+rm -rf $BASE_DIR/opendj_*
 rm  -f $TOPOLOGY_TRUSTSTORE
 
 DIR="$BASE_DIR/${REPLICA_DIRS[0]}"
@@ -118,7 +124,13 @@ do
 
         rm -rf $DIR
     fi
-    cp -r $PACKAGE_DIR $DIR
+    unzip -q ${ZIP} -d ${DIR}
+    if [ "${ZIP}" == "${ZIP_2_5_0}" ]
+    then
+        mv ${DIR}/OpenDJ-2.5.0-Xpress1/* ${DIR}
+    else
+        mv ${DIR}/opendj/* ${DIR}
+    fi
 
 
     ###################################
@@ -148,14 +160,14 @@ do
     then
         : # empty for now
     fi
-    # OpenDJ < 4.0: add --cli -n
+    # OpenDJ < 4.0: add --cli -n and --generateSelfSignedCertificate
     $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
 
     rm -f $DIR/rs$IDX.cert
     # export certificate from server
     keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
     # import certificate from the server into the topology truststore
-    keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass password -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
+    keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
 
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
@@ -235,7 +247,7 @@ END_OF_COMMAND_INPUT
     fi
 done
 
-keytool -noprompt -list -keystore $TOPOLOGY_TRUSTSTORE
+keytool -list -keystore $TOPOLOGY_TRUSTSTORE -storepass $PASSWORD
 
 # let last node finish startup
 sleep 10
@@ -256,6 +268,22 @@ then
 fi
 
 exit
+
+#/home/jnrouvignac/git/opendj/opendj-server/target/opendj/setup proxy-server \
+#          --instancePath /home/jnrouvignac/git/opendj/opendj-server/target/opendj \
+#          --rootUserDn cn=Directory\ Manager \
+#          --rootUserPassword ****** \
+#          --hostname jnrouvignac-Precision-5510 \
+#          --adminConnectorPort 4444 \
+#          --ldapPort 1389 \
+#          --enableStartTls \
+#          --ldapsPort 1636 \
+#          --httpsPort 8443 \
+#          --staticPrimaryServer localhost:1500 \
+#          --staticPrimaryServer localhost:1501 \
+#          --proxyUserBindDn cn=Directory\ Manager \
+#          --proxyUserBindPassword ****** \
+#          --loadBalancingAlgorithm affinity
 
 $DIR/bin/dsconfig     -h $HOSTNAME -p 4500 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
                               delete-backend                     --backend-name userRoot

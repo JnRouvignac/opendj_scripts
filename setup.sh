@@ -5,17 +5,16 @@
 PS4='\n+ Line ${LINENO}: ' # -x outputs is prefixed with newline and LINENO
 
 BUILD_DIR=`pwd`
-PACKAGE_DIR="${BUILD_DIR}/target/package/opendj"
 ZIP_2_5_0=~/Downloads/OpenDJ-2.5.0-Xpress1.zip
 ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
-ZIP_MASTER="${BUILD_DIR}/target/package/opendj-4.1.0-SNAPSHOT.zip"
+ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
 ZIP=${ZIP_MASTER}
 
 DATETIME=`date +%Y%m%d_%H%M%S`
-SETUP_DIR="${PACKAGE_DIR}_auto"
+SETUP_DIR="${BUILD_DIR}/target/opendj_auto"
 HOSTNAME=localhost
 ADMIN_PORT=4444
 DEBUG_PORT=8000
@@ -64,7 +63,7 @@ fi
 
 
 # -O will prevent the server from starting
-# OpenDJ < 4.0: add --cli -n
+# OpenDJ < 4.0: add --cli -n and --generateSelfSignedCertificate
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
 $SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
 
