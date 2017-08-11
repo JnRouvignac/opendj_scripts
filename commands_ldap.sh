@@ -12,9 +12,9 @@ target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password 
 
 # LDAP modify
 # create user
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -a -f ~/ldif/newuser.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/newuser.ldif
 # create user inline
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -a <<END_OF_COMMAND_INPUT
+target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password <<END_OF_COMMAND_INPUT
 dn: cn=A1,dc=example,dc=com
 objectclass:top
 objectclass:organizationalperson
@@ -102,7 +102,7 @@ target/opendj_auto/bin/ldapsearch -p 1389 -b "cn=this does not exist,ou=people,d
 target/opendj_auto/bin/ldapdelete -p 1389 "uid=user.9,ou=people,dc=example,dc=com"
 target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_modify_user_entry.ldif
 target/opendj_auto/bin/ldapsearch -p 1389 -b "ou=people,dc=example,dc=com" "objectclass=*" debugsearchindex
-target/opendj_auto/bin/ldapmodify -p 1389 -a -f ~/ldif/OPEND-948_existing_user_entry.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_existing_user_entry.ldif
 
 # replication
 
