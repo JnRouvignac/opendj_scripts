@@ -10,7 +10,13 @@ ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
-ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
+IS_35X=1
+if [ -z "${IS_35X}" ]
+then
+    ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
+else
+    ZIP_MASTER=`ls ${BUILD_DIR}/target/package/*pen*-*.zip`
+fi
 ZIP=${ZIP_MASTER}
 
 DATETIME=`date +%Y%m%d_%H%M%S`
@@ -160,14 +166,21 @@ do
     then
         : # empty for now
     fi
-    # OpenDJ < 4.0: add --cli -n and --generateSelfSignedCertificate
+    # OpenDJ < 4.0:
+    if [ -n "${IS_35X}" ]
+    then
+        SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
+    fi
     $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
 
-    rm -f $DIR/rs$IDX.cert
-    # export certificate from server
-    keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
-    # import certificate from the server into the topology truststore
-    keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
+    if [ -z "${IS_35X}" ]
+    then
+        rm -f $DIR/rs$IDX.cert
+        # export certificate from server
+        keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
+        # import certificate from the server into the topology truststore
+        keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
+    fi
 
     OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
@@ -247,7 +260,10 @@ END_OF_COMMAND_INPUT
     fi
 done
 
-keytool -list -keystore $TOPOLOGY_TRUSTSTORE -storepass $PASSWORD
+if [ -z "${IS_35X}" ]
+then
+    keytool -list -keystore $TOPOLOGY_TRUSTSTORE -storepass $PASSWORD
+fi
 
 # let last node finish startup
 sleep 10

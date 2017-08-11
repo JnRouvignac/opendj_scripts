@@ -10,7 +10,13 @@ ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
-ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
+IS_35X=1
+if [ -z "${IS_35X}" ]
+then
+    ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
+else
+    ZIP_MASTER=`ls ${BUILD_DIR}/target/package/*pen*-*.zip`
+fi
 ZIP=${ZIP_MASTER}
 
 DATETIME=`date +%Y%m%d_%H%M%S`
@@ -63,7 +69,11 @@ fi
 
 
 # -O will prevent the server from starting
-# OpenDJ < 4.0: add --cli -n and --generateSelfSignedCertificate
+# OpenDJ < 4.0:
+if [ -n "${IS_35X}" ]
+then
+    SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
+fi
 #OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
 $SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
 
