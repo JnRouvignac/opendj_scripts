@@ -10,12 +10,13 @@ ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
-IS_35X=1
-if [ -z "${IS_35X}" ]
+BUILDING_35X=
+if [ "${BUILDING_35X}" = false ]
+then
+    ZIP_MASTER=`ls ${BUILD_DIR}/target/package/*pen*-*.zip`
+elif [ -z "${BUILDING_35X}" ]
 then
     ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
-else
-    ZIP_MASTER=`ls ${BUILD_DIR}/target/package/*pen*-*.zip`
 fi
 ZIP=${ZIP_MASTER}
 
@@ -70,7 +71,7 @@ fi
 
 # -O will prevent the server from starting
 # OpenDJ < 4.0:
-if [ -n "${IS_35X}" ]
+if [ "${BUILDING_35X}" = true ]
 then
     SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
 fi
