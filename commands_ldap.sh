@@ -124,6 +124,8 @@ target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password 
 OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=y"
 SCRIPT_ARGS="-agentlib:jdwp=transport=dt_socket,address=8001,server=y,suspend=y"
 
+# take jstacks in quick succession
+for i in `seq 0 9`; do jstack `jps | grep DirectoryServer | cut -d' ' -f1` > target/jstack/jstack_${i}.txt ; done
 
 
 
