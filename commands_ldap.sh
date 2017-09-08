@@ -78,7 +78,8 @@ target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Ma
 target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=monitor" "(objectClass=ds-connectionhandler-statistics-monitor-entry)"
 target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/modrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -b "uid=user.%d,ou=people,dc=example,dc=com"     -g "rand(0,1000)" -g "randstr(16)" 'description:%2$s'
-
+#target/opendj_auto/bin/modrate -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
+#                                       -b "uid=user.%d,ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:%2$s'
 
 # status
 target/opendj_auto/bin/status        -w password -X    -D "cn=Directory Manager"
@@ -104,10 +105,6 @@ target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_modify_user_entry.
 target/opendj_auto/bin/ldapsearch -p 1389 -b "ou=people,dc=example,dc=com" "objectclass=*" debugsearchindex
 target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_existing_user_entry.ldif
 
-# replication
-
-target/opendj_auto/bin/modrate -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
-                                       -b "uid=user.%d,ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:%2$s'
 # search on changelog
 target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -b "cn=changelog" "&" "*" "+" | less
 # persistent search on changelog
@@ -121,7 +118,12 @@ target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password 
 
 
 
-OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=y"
+# JITWatch
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -XX:+UnlockDiagnosticVMOptions -XX:+TraceClassLoading -XX:+LogCompilation -XX:+PrintAssembly"
+# Java Mission Control - Flight Recorder
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints"
+# Debugging
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=y"
 SCRIPT_ARGS="-agentlib:jdwp=transport=dt_socket,address=8001,server=y,suspend=y"
 
 # take jstacks in quick succession

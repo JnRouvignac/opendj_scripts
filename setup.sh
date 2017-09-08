@@ -69,20 +69,19 @@ then
 fi
 
 
-# -O will prevent the server from starting
 # OpenDJ < 4.0:
 if [ "${BUILDING_35X}" = true ]
 then
     SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
 fi
-#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
 $SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
 
 
 if [ "${USE_IMPORT}" = true ]
 then
     # import initial data
-#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
     $SETUP_DIR/bin/import-ldif \
             --backendID userRoot \
             --ldifFile ~/ldif/Example.ldif \
@@ -95,7 +94,7 @@ fi
 
 if [ -n "$DEBUG_PORT" ]
 then
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
     # start jdb on debug port to catch first debug session

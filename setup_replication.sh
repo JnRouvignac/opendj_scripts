@@ -167,6 +167,7 @@ do
     then
         : # empty for now
     fi
+
     # OpenDJ < 4.0:
     if [ "${BUILDING_35X}" = true ]
     then
@@ -183,8 +184,8 @@ do
         keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
     fi
 
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
-    # OPENDJ_JAVA_ARGS="$OPENDJ_JAVA_ARGS -Djavax.net.debug=all" # For SSL debug
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
+    # OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -Djavax.net.debug=all" # For SSL debug
 
     # add proxy-auth privilege
     # enable combined logs
@@ -209,7 +210,7 @@ END_OF_COMMAND_INPUT
         # need to restart the server for the debug log changes to take effect. @see OPENDJ-1289
         $DIR/bin/stop-ds
         sleep 2
-        OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
+        OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
     fi
 
 
@@ -235,7 +236,7 @@ END_OF_COMMAND_INPUT
         echo "##################################################################################################"
         echo "# Creating replication link: ${REPLICA_DIRS[0]} => ${REPLICA_DIRS[$IDX]}"
         echo "##################################################################################################"
-#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
+#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
         $DIR/bin/dsreplication enable \
                  --adminUID admin --adminPassword $PASSWORD --baseDN "$BASE_DN" --trustAll --no-prompt \
                  --host1 $HOSTNAME     --port1 4500    --bindDN1 "$BIND_DN" --bindPassword1 $PASSWORD $DSREPLICATION_ENABLE_ARGS_0 \
@@ -279,7 +280,7 @@ DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
 if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
-#OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
+#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
     $DIR/bin/dsreplication    initialize-all --adminUID admin  -w $PASSWORD \
                          -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
 fi
