@@ -194,6 +194,11 @@ do
     $DIR/bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
+                          create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:808$IDX
+                          set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
+                          set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
+                          create-plugin --type graphite-monitor-reporter --plugin-name "graphite reporter" --set enabled:true --set graphite-server:localhost:2004 --set metric-name-prefix:opendj.ds$IDX
+                          set-global-configuration-prop --set disabled-privilege:monitor-read
 END_OF_COMMAND_INPUT
 
     # enable debug logs + create debug targets
