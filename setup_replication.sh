@@ -184,14 +184,14 @@ do
         keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
     fi
 
-    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
+    $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -Djavax.net.debug=all" # For SSL debug
 
     # add proxy-auth privilege
     # enable combined logs
     # keep only 1 file for logs/access to avoid staturating the disk
     $DIR/bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
-                          set-root-dn-prop               --add default-root-privilege-name:proxied-auth
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
 END_OF_COMMAND_INPUT
