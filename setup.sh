@@ -84,7 +84,7 @@ $SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMI
 if [ "${USE_IMPORT}" = true ]
 then
     # import initial data
-OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
     $SETUP_DIR/bin/import-ldif \
             --backendID userRoot \
             --ldifFile ~/ldif/Example.ldif \

@@ -176,7 +176,8 @@ do
     then
         SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
     fi
-    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS  -O
+    #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=y" \
+    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS --acceptLicense -O
 
     if [ -z "${BUILDING_35X}" ]
     then
