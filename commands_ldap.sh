@@ -75,16 +75,17 @@ target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Ma
 target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  create-debug-target         --publisher-name "File-Based Debug Logger"  --set debug-level:all --type generic --target-name org.opends.server.api
 
 # stats / Performance
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=monitor" "(objectClass=ds-connectionhandler-statistics-monitor-entry)"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
-target/opendj_auto/bin/modrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -b "uid=user.%d,ou=people,dc=example,dc=com"     -g "rand(0,1000)" -g "randstr(16)" 'description:%2$s'
-#target/opendj_auto/bin/modrate -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
-#                                       -b "uid=user.%d,ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:%2$s'
+target/opendj_auto/bin/modrate    -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
+target/opendj_auto/bin/searchrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" +
+#target/opendj_auto/bin/modrate   -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
+#                                         -b "uid=user.{1},ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:{2}'
 
 # status
 target/opendj_auto/bin/status        -w password -X    -D "cn=Directory Manager"
 # replication
-target/opendj_auto/bin/dsreplication -w password -X -n -b "dc=example,dc=com" status
+target/opendj_auto/bin/dsreplication status --adminUID admin  -w password -h localhost -p 4500 -b "dc=example,dc=com" --trustAll --no-prompt
 target/opendj_auto/bin/control-panel -w password -X    -D "cn=Directory Manager"
 
 
@@ -99,7 +100,7 @@ for i in {5..12}; do grep conn=${i} target/opendj_auto/logs/access | perl -ne 'p
 
 target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/OPEND-948_aci.ldif
 target/opendj_auto/bin/ldapsearch -p 1389 -b "dc=example,dc=com" "&"
-target/opendj_auto/bin/ldapsearch -p 1389 -b "cn=this does not exist,ou=people,dc=example,dc=com" "objectclass=*"
+target/opendj_auto/bin/ldapsearch -p 1389 -b "cn=this does not exist,ou=people,dc=example,dc=com" "(objectclass=*)"
 target/opendj_auto/bin/ldapdelete -p 1389 "uid=user.9,ou=people,dc=example,dc=com"
 target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_modify_user_entry.ldif
 target/opendj_auto/bin/ldapsearch -p 1389 -b "ou=people,dc=example,dc=com" "objectclass=*" debugsearchindex
@@ -118,28 +119,14 @@ target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password 
 
 
 
+# Debugging
+OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=y"
+SCRIPT_ARGS="-agentlib:jdwp=transport=dt_socket,address=8001,server=y,suspend=y"
 # JITWatch
 OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -XX:+UnlockDiagnosticVMOptions -XX:+TraceClassLoading -XX:+LogCompilation -XX:+PrintAssembly"
 # Java Mission Control - Flight Recorder
 OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints"
-# Debugging
-OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=y"
-SCRIPT_ARGS="-agentlib:jdwp=transport=dt_socket,address=8001,server=y,suspend=y"
 
 # take jstacks in quick succession
 for i in `seq 0 9`; do jstack `jps | grep DirectoryServer | cut -d' ' -f1` > target/jstack/jstack_${i}.txt ; done
 
-
-
-
-TODO JNR:
-- include real processing time in HTTP etime
-- hook grizzly logs into OpenDJ server logs
-- only enable the HTTP access log publishers when the HTTP handler is started
-- Enable HTTP conn handler by default
-	- Change setup to offer a port for it
-	- fix running tests
-- Bug SEARCH RES after DISCONNECT in HTTP conn handler log
-- http://docs.oracle.com/javaee/6/api/javax/servlet/ServletRequest.html#getRemoteHost%28%29:
-	"If the engine cannot or chooses not to resolve the hostname (to improve performance), this method returns the dotted-string form of the IP address."
-	How to configure this with Grizzly?
