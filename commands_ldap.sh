@@ -78,7 +78,7 @@ target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Ma
 target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/modrate    -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
-target/opendj_auto/bin/searchrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" +
+target/opendj_auto/bin/searchrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" *
 #target/opendj_auto/bin/modrate   -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
 #                                         -b "uid=user.{1},ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:{2}'
 
