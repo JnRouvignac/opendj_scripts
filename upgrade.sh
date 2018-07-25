@@ -10,13 +10,16 @@ ZIP_2_6_0=~/Downloads/OpenDJ-2.6.0.zip
 ZIP_3_0_0=~/Downloads/OpenDJ-3.0.0.zip
 ZIP_3_5_0=~/Downloads/opendj-3.5.0.zip
 ZIP_4_0_0=~/Downloads/opendj-4.0.0.zip
+ZIP_5_0_0=~/Downloads/opendj-4.0.0.zip
+ZIP_5_5_0=~/Downloads/DS-5.5.0.zip
+ZIP_6_0_0=~/Downloads/DS-6.0.0.zip
 ZIP_MASTER=`ls ${BUILD_DIR}/target/*pen*-*.zip`
 
-ZIP=${ZIP_3_5_0}
+ZIP=${ZIP_5_5_0}
 ZIP2=${ZIP_MASTER}
 
 DATETIME=`date +%Y%m%d_%H%M%S`
-SETUP_DIR="${BUILD_DIR}/target/package/opendj_auto"
+SETUP_DIR="${BUILD_DIR}/target/opendj_auto"
 HOSTNAME=localhost
 ADMIN_PORT=4444
 DEBUG_PORT=8000
@@ -61,21 +64,24 @@ then
    fi
 fi
 
-# TODO also clear $SETUP_DIR/.locks/*.lock ?
-
 SETUP_ARGS="-d 1000"
 if [ "{$ZIP}" != "${ZIP_2_5_0}" ]
 then
     SETUP_ARGS="${SETUP_ARGS} --acceptLicense"
 fi
 
-# -O will prevent the server from starting
-$SETUP_DIR/setup --cli -w "$PASSWORD" -p 1389 --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" -n $SETUP_ARGS --enableStartTLS --generateSelfSignedCertificate --doNotStart -O #--acceptLicense
-#--httpPort 8080
+
+# OpenDJ < 4.0:
+if [ "${BUILDING_35X}" = true ]
+then
+    SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
+fi
+#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+$SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
 
 if [ -n "$DEBUG_PORT" ]
 then
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
     # start jdb on debug port to catch first debug session
@@ -85,48 +91,6 @@ then
         echo exit
         sleep 0.1s
     done | jdb -attach localhost:$DEBUG_PORT
-#read
-#    $SETUP_DIR/bin/dsconfig create-local-db-vlv-index \
-#          --hostname "${HOSTNAME}" -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X \
-#          --backend-name userRoot \
-#          --set base-dn:"$BASE_DN" \
-#          --set filter:"(&(uid>=user.*)(photo>=*)(numSubordinates<=1)(entryUUID>=*)(modifyTimestamp>=0)(etag>=*)(internationaliSDNNumber>=*)(cn:en.1:=*)(cn:en.2:=*)(cn:en.3:=*)(cn:en.4:=*)(cn:en.5:=*)(relativeTimeGTOrderingMatch:=+5m)(relativeTimeLTOrderingMatch:=+5m))" \
-#          --set scope:whole-subtree \
-#          --set sort-order:"-uid photo numSubordinates entryUUID modifyTimestamp etag internationaliSDNNumber" \
-#          --type generic \
-#          --index-name upgrade_me \
-#          --no-prompt
-# caseIgnoreMatch octetStringMatch integerOrderingMatch uuidOrderingMatch generalizedTimeOrderingMatch caseExactMatch 
-# CaseIgnoreOrderingMatchingRule OctetStringOrderingMatchingRule IntegerOrderingMatchingRule UUIDOrderingMatchingRule GeneralizedTimeOrderingMatchingRule CaseExactOrderingMatchingRule NumericStringOrderingMatchingRule
-# HistoricalCsnOrderingMatchingRule
-
-#    $SETUP_DIR/bin/dsconfig create-backend-index \
-#          --hostname "${HOSTNAME}" -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X \
-#          --backend-name userRoot \
-#          --set index-type:equality \
-#          --type generic \
-#          --index-name seealso \
-#          --no-prompt
-
-#    $SETUP_DIR/bin/rebuild-index -p "${ADMIN_PORT}" -D "${BIND_DN}" -w "${PASSWORD}" -X --baseDN "$BASE_DN" --index seealso
-
-#target/package/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w admin -a <<END_OF_COMMAND_INPUT
-#dn: cn=A1,dc=example,dc=com
-#objectclass:top
-#objectclass:organizationalperson
-#objectclass:inetorgperson
-#objectclass:person
-#sn:User
-#cn:Test User
-#userPassword:secret12
-#description:1
-#description:2
-#seealso:cn=test
-#mail:bla@example.com
-#telephonenumber:+33165990803
-#END_OF_COMMAND_INPUT
-
-#    $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
 
    $SETUP_DIR/bin/stop-ds
 
@@ -134,10 +98,10 @@ then
    rsync --archive ${SETUP_DIR}/opendj/ ${SETUP_DIR}
 
 #read
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
+#    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=y" \
        $SETUP_DIR/upgrade -n --force
 
-    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+#    OPENDJ_JAVA_ARGS="-agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
     $SETUP_DIR/bin/ldapsearch -p 1389 -D "${BIND_DN}" -w "${PASSWORD}" -b "dc=example,dc=com" "(dn=user.999,ou=People,dc=example,dc=com)"
