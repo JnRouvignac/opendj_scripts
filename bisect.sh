@@ -30,7 +30,7 @@ run_pyforge()
         exit 125 # stop bisecting
     fi
 
-    ./run-pybot.py --suite testcases.replication.externalchangelog .
+    ./run-pybot.py -n -v -s upgrade_group.replication -t Replication_Topology_Split_DS_RS opendj
     FINAL_RESULT=$?
 
     cd -
@@ -42,7 +42,7 @@ run_pyforge()
 
 run_setup_replication()
 {
-    cd ~/git/opendj/opendj-server-legacy
+    cd ~/git/opendj/opendj-server
     if [ $? -ne 0 ]
     then
         exit 125 # stop bisecting
