@@ -201,7 +201,6 @@ do
                           create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:808$IDX
                           set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
                           set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
-                          create-plugin --type graphite-monitor-reporter --plugin-name "graphite reporter" --set enabled:true --set graphite-server:localhost:2004 --set metric-name-prefix:opendj.ds$IDX
                           set-global-configuration-prop --set disabled-privilege:monitor-read
 END_OF_COMMAND_INPUT
 

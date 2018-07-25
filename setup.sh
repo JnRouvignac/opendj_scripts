@@ -109,4 +109,13 @@ then
     done | jdb -attach localhost:$DEBUG_PORT
 fi
 
+
+$SETUP_DIR/bin/dsconfig  -h $HOSTNAME -p 4444 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+                         create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:8080
+                         set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
+                         set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
+                         set-global-configuration-prop --set disabled-privilege:monitor-read
+END_OF_COMMAND_INPUT
+
+
 cd $BUILD_DIR
