@@ -193,7 +193,10 @@ do
                           create-connection-handler     --type http --handler-name "HTTP"   --set enabled:true --set listen-port:808$IDX
                           set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
                           set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
+
                           set-synchronization-provider-prop --provider-name "Multimaster synchronization" --set "enabled:true" ${SET_BOOTSTRAP_RSS}
+                          create-replication-domain         --provider-name "Multimaster synchronization" --domain-name "cn=schema" --set "base-dn:cn=schema" --set "enabled:true"
+                          create-replication-domain         --provider-name "Multimaster synchronization" --domain-name "cn=admin data" --set "base-dn:cn=admin data" --set "enabled:true"
 END_OF_COMMAND_INPUT
 
     OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
@@ -236,9 +239,7 @@ DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
 if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
-#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
-    $DIR/bin/dsreplication    initialize-all --adminUID "$BIND_DN"  -w $PASSWORD \
-                         -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
+    $DIR/bin/dsrepl initialize --bindDn uid=admin -w password -p 4500 -b dc=example,dc=com -b cn=schema -b "cn=admin data" --toAllServers --trustAll --no-prompt
 fi
 
 exit
