@@ -1,20 +1,22 @@
 #!/bin/bash -e
 
 # LDAP search
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "dc=example,dc=com" "(uid=bjensen)"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "dc=example,dc=com" "(uid=bjensen)"
 curl "http://localhost:8080/api/users/bjensen?_prettyPrint=true"
 
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "dc=example,dc=com" "&"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "dc=example,dc=com" "&"
 curl "http://localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
 
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=schema" -s base "(objectclass=*)" +
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=schema" -s base "(objectclass=*)" +
+# root DSE
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "" -s base "(objectclass=*)" +
 
 
 # LDAP modify
 # create user
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/newuser.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/newuser.ldif
 # create user inline
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password <<END_OF_COMMAND_INPUT
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password <<END_OF_COMMAND_INPUT
 dn: cn=A1,dc=example,dc=com
 objectclass:top
 objectclass:organizationalperson
@@ -28,20 +30,20 @@ mail:bla@example.com
 telephonenumber:+33165990803
 END_OF_COMMAND_INPUT
 # add description attribute
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/newdesc.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/newdesc.ldif
 # modify description 1 attribute
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/moddesc1.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/moddesc1.ldif
 # modify description 2 attribute
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/moddesc2.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/moddesc2.ldif
 # make description attribute multivalued
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/multivalueddesc.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/multivalueddesc.ldif
 # delete user
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/deluser.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/deluser.ldif
 # display the newly added user
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "dc=example,dc=com" "(uid=newuser)"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "dc=example,dc=com" "(uid=newuser)"
 
 # modify, delete+add
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password <<END_OF_COMMAND_INPUT
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password <<END_OF_COMMAND_INPUT
 dn: cn=schema
 changetype: modify
 delete: attributeTypes
@@ -61,44 +63,44 @@ curl "http://bjensen:hifalutin@localhost:8080/api/users/newuser?_prettyPrint=tru
 
 # dsconfig HTTP Connection Handler
 # a bidouiller tools.properties dans le home???
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X     --displayCommand --advanced
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X     --displayCommand --advanced
 
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set enabled:true
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based HTTP Access Logger" --set enabled:true
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set suppress-internal-operations:false
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set log-format:"cs-host c-ip cs-username datetime cs-method cs-uri-query cs-version sc-status sc-bytes cs(User-Agent) x-connection-id" &
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set enabled:true
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based HTTP Access Logger" --set enabled:true
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set suppress-internal-operations:false
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set log-format:"cs-host c-ip cs-username datetime cs-method cs-uri-query cs-version sc-status sc-bytes cs(User-Agent) x-connection-id" &
 
 # enable debug logs
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Debug Logger"  --set default-debug-level:all --set enabled:true
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Debug Logger"  --set default-debug-level:all --set enabled:true
 # create debug target
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  create-debug-target         --publisher-name "File-Based Debug Logger"  --set debug-level:all --type generic --target-name org.opends.server.api
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  create-debug-target         --publisher-name "File-Based Debug Logger"  --set debug-level:all --type generic --target-name org.opends.server.api
 
 # stats / Performance
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=monitor" "(objectClass=*)"
-target/opendj_auto/bin/ldapsearch -p 1389 -D "cn=Directory Manager" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
-target/opendj_auto/bin/modrate    -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
-target/opendj_auto/bin/searchrate -p 1500 -D "cn=directory manager" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" *
-#target/opendj_auto/bin/modrate   -p 1500 -D "cn=directory manager" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=monitor" "(objectClass=*)"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
+target/opendj_auto/bin/modrate    -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
+target/opendj_auto/bin/searchrate -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" *
+#target/opendj_auto/bin/modrate   -p 1500 -D "uid=admin" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
 #                                         -b "uid=user.{1},ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:{2}'
 
 # status
-target/opendj_auto/bin/status        -w password -X    -D "cn=Directory Manager"
+target/opendj_auto/bin/status        -w password -X    -D "uid=admin"
 # replication
 target/opendj_auto/bin/dsreplication status --adminUID admin  -w password -h localhost -p 4500 -b "dc=example,dc=com" --trustAll --no-prompt
-target/opendj_auto/bin/control-panel -w password -X    -D "cn=Directory Manager"
+target/opendj_auto/bin/control-panel -w password -X    -D "uid=admin"
 
 
 # Processing time test
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set enabled:true
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based HTTP Access Logger" --set enabled:true
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "cn=Directory Manager" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set suppress-internal-operations:false
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set enabled:true
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based HTTP Access Logger" --set enabled:true
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-log-publisher-prop      --publisher-name "File-Based Access Logger" --set suppress-internal-operations:false
 curl "http://bjensen:hifalutin@localhost:8080/api/users?_queryFilter=true&_prettyPrint=true"
 for i in {5..12}; do grep conn=${i} target/opendj_auto/logs/access | perl -ne 'print "$1\n" if (m/etime=(\d+)/);' | paste -sd+ | bc; done
 
 
-target/opendj_auto/bin/ldapmodify -p 1389 -D "cn=Directory Manager" -w password -f ~/ldif/OPEND-948_aci.ldif
+target/opendj_auto/bin/ldapmodify -p 1389 -D "uid=admin" -w password -f ~/ldif/OPEND-948_aci.ldif
 target/opendj_auto/bin/ldapsearch -p 1389 -b "dc=example,dc=com" "&"
 target/opendj_auto/bin/ldapsearch -p 1389 -b "cn=this does not exist,ou=people,dc=example,dc=com" "(objectclass=*)"
 target/opendj_auto/bin/ldapdelete -p 1389 "uid=user.9,ou=people,dc=example,dc=com"
@@ -107,15 +109,15 @@ target/opendj_auto/bin/ldapsearch -p 1389 -b "ou=people,dc=example,dc=com" "obje
 target/opendj_auto/bin/ldapmodify -p 1389 -f ~/ldif/OPEND-948_existing_user_entry.ldif
 
 # search on changelog
-target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -b "cn=changelog" "&" "*" "+" | less
+target/opendj_auto/bin/ldapsearch -p 1501 -D "uid=admin" -w password -b "cn=changelog" "&" "*" "+" | less
 # persistent search on changelog
-target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -C ps:all -b "cn=changelog" "&" "(objectclass=*)" | less
+target/opendj_auto/bin/ldapsearch -p 1501 -D "uid=admin" -w password -C ps:all -b "cn=changelog" "&" "(objectclass=*)" | less
 # search on changelog with changenumber
-target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -b "cn=changelog" "changenumber>=1" "*" "+"
+target/opendj_auto/bin/ldapsearch -p 1501 -D "uid=admin" -w password -b "cn=changelog" "changenumber>=1" "*" "+"
 # search on changelog with changelogcookie
-target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -b "cn=changelog" "changelogcookie=...cookie..." "*" "+"
+target/opendj_auto/bin/ldapsearch -p 1501 -D "uid=admin" -w password -b "cn=changelog" "changelogcookie=...cookie..." "*" "+"
 # search on lastchangenumber virtual attribute
-target/opendj_auto/bin/ldapsearch -p 1501 -D "cn=Directory Manager" -w password -b "" -s base "&" lastchangenumber
+target/opendj_auto/bin/ldapsearch -p 1501 -D "uid=admin" -w password -b "" -s base "&" lastchangenumber
 
 
 

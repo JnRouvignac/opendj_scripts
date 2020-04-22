@@ -13,6 +13,7 @@ ZIP_4_0_0=~/git/pyforge/archives/opendj-4.0.0.zip
 ZIP_5_0_0=~/git/pyforge/archives/opendj-4.0.0.zip
 ZIP_5_5_0=~/git/pyforge/archives/DS-5.5.0.zip
 ZIP_6_0_0=~/git/pyforge/archives/DS-6.0.0.zip
+ZIP_6_5_0=~/git/pyforge/archives/DS-6.5.0.zip
 BUILDING_35X=
 if [ "${BUILDING_35X}" = false ]
 then
@@ -27,7 +28,7 @@ DATETIME=`date +%Y%m%d_%H%M%S`
 BASE_DIR="target"
 SERVER_PID_FILE="logs/server.pid"
 HOSTNAME=`hostname`
-BIND_DN="cn=Directory Manager"
+BIND_DN="uid=admin"
 PASSWORD=password
 BASE_DN="dc=example,dc=com"
 # Naming is important here:
@@ -151,18 +152,13 @@ do
     echo "# Setting up and starting server $DIR, debugging on port 800$IDX"
     echo "##################################################################################################"
     SETUP_ARGS=""
+    #DATA_INITIALIZED="Use import-ldif"
     if [ -n ${IS_DS} ]
     then
-        # import initial data
-        # $DIR/bin/import-ldif \
-        #              --backendID userRoot \
-        #              --ldifFile ~/ldif/Example.ldif \
-        #              --clearBackend
-        #              # -D "cn=Directory Manager" -w admin
         if [ -z "${DATA_INITIALIZED}" ]
         then
             SETUP_ARGS="$SETUP_ARGS -d 1000"
-            DATA_INITIALIZED=1
+            DATA_INITIALIZED="Generated data"
         fi
 
         SETUP_ARGS="$SETUP_ARGS -b $BASE_DN"
@@ -178,6 +174,18 @@ do
     fi
     #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=y" \
     $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS --acceptLicense -O
+    if [ "${DATA_INITIALIZED}" = "Use import-ldif" ]
+    then
+        # import initial data
+        OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
+        $DIR/bin/import-ldif \
+                      --backendID userRoot \
+                      --ldifFile ~/ldif/Example.ldif \
+                      --clearBackend \
+                      --offline
+                      # -D "cn=Directory Manager" -w admin
+        DATA_INITIALIZED="Imported data"
+    fi
 
     if [ -z "${BUILDING_35X}" ]
     then
@@ -255,16 +263,8 @@ END_OF_COMMAND_INPUT
         echo "##################################################################################################"
         echo "# Setting replication group #$IDX for ${REPLICA_DIRS[$IDX]}"
         echo "##################################################################################################"
-        if [ -n "${IS_RS}" ]
-        then
-            $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                              set-replication-server-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX
-        fi
-        if [ -n "${IS_DS}" ]
-        then
-            $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                              set-replication-domain-prop   --provider-name "Multimaster Synchronization" --set group-id:$IDX  --domain-name dc=example,dc=com
-        fi
+        $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
+                          set-global-configuration-prop   --set group-id:$IDX
 
         echo "Done."
     fi

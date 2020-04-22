@@ -13,6 +13,7 @@ ZIP_4_0_0=~/git/pyforge/archives/opendj-4.0.0.zip
 ZIP_5_0_0=~/git/pyforge/archives/opendj-4.0.0.zip
 ZIP_5_5_0=~/git/pyforge/archives/DS-5.5.0.zip
 ZIP_6_0_0=~/git/pyforge/archives/DS-6.0.0.zip
+ZIP_6_5_0=~/git/pyforge/archives/DS-6.5.0.zip
 BUILDING_35X=
 if [ "${BUILDING_35X}" = false ]
 then
@@ -28,7 +29,7 @@ SETUP_DIR="${BUILD_DIR}/target/opendj_auto"
 HOSTNAME=`hostname`
 ADMIN_PORT=4444
 DEBUG_PORT=8000
-BIND_DN="cn=Directory Manager"
+BIND_DN="uid=admin"
 PASSWORD=password
 BASE_DN="dc=example,dc=com"
 
@@ -60,7 +61,7 @@ echo "##########################################################################
 echo "# setting up OpenDJ in '$SETUP_DIR'"
 echo "##################################################################################################"
 
-USE_IMPORT=true
+USE_IMPORT=false
 if [ "${USE_IMPORT}" = false ]
 then
     SETUP_ARGS="-d 1000"
@@ -97,7 +98,7 @@ fi
 
 if [ -n "$DEBUG_PORT" ]
 then
-    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=~/git/opendj/opendj-server -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
        $SETUP_DIR/bin/start-ds
 
     # start jdb on debug port to catch first debug session
