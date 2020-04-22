@@ -31,6 +31,7 @@ HOSTNAME=`hostname`
 BIND_DN="uid=admin"
 PASSWORD=password
 BASE_DN="dc=example,dc=com"
+DEPLOYMENT_KEY=AMsvM_0ZcFmWoyCizHo6SSuWIAFUxnA5CBVN1bkVDAMvhkJAzBthlHVs
 # Naming is important here:
 # DS   means: deploy a DS only node
 #   RS means: deploy a RS only node
@@ -74,19 +75,7 @@ then
     IS_RS=1
 fi
 
-DSREPLICATION_ENABLE_ARGS_0=""
-if [ -n "${IS_DS_ONLY}" ]
-then
-    DSREPLICATION_ENABLE_ARGS_0="${DSREPLICATION_ENABLE_ARGS_0} --noReplicationServer1"
-elif [ -n "${IS_RS}" ]
-then
-    DSREPLICATION_ENABLE_ARGS_0="${DSREPLICATION_ENABLE_ARGS_0} --replicationPort1 8900"
-    if [ -n "${IS_RS_ONLY}" ]
-    then
-        DSREPLICATION_ENABLE_ARGS_0="${DSREPLICATION_ENABLE_ARGS_0} --onlyReplicationServer1"
-    fi
-fi
-
+SET_BOOTSTRAP_RSS=""
 NB_DS=0
 for IDX in ${!REPLICA_DIRS[*]}
 do
@@ -113,6 +102,8 @@ do
         IS_RS_ONLY=1
         IS_RS=1
     fi
+
+    SET_BOOTSTRAP_RSS="$SET_BOOTSTRAP_RSS --set bootstrap-replication-server:${HOSTNAME}:890$IDX"
 
     ###################################
     # Stop/Kill previous server
@@ -155,16 +146,12 @@ do
     #DATA_INITIALIZED="Use import-ldif"
     if [ -n ${IS_DS} ]
     then
-        if [ -z "${DATA_INITIALIZED}" ]
-        then
-            SETUP_ARGS="$SETUP_ARGS -d 1000"
-            DATA_INITIALIZED="Generated data"
-        fi
-
-        SETUP_ARGS="$SETUP_ARGS -b $BASE_DN"
-    elif [ -n ${IS_RS} ]
+        SETUP_ARGS="$SETUP_ARGS --profile ds-evaluation --set generatedUsers:1000"
+        DATA_INITIALIZED="Generated data"
+    fi
+    if [ -n ${IS_RS} ]
     then
-        : # empty for now
+        SETUP_ARGS="$SETUP_ARGS --replicationPort 890$IDX"
     fi
 
     # OpenDJ < 4.0:
@@ -173,7 +160,7 @@ do
         SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
     fi
     #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=y" \
-    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS --acceptLicense -O
+    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD --acceptLicense -O
     if [ "${DATA_INITIALIZED}" = "Use import-ldif" ]
     then
         # import initial data
@@ -191,26 +178,27 @@ do
     then
         rm -f $DIR/rs$IDX.cert
         # export certificate from server
-        keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
+        #keytool -exportcert -alias server-cert -keystore $DIR/config/keystore -storetype pkcs12 -storepass:file $DIR/config/keystore.pin -file $DIR/rs$IDX.cert
         # import certificate from the server into the topology truststore
-        keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
+        #keytool -importcert -noprompt -keystore $TOPOLOGY_TRUSTSTORE -keypass $PASSWORD -storepass password -storetype jks -alias rs$IDX-cert -file $DIR/rs$IDX.cert
     fi
-
-    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
-    $DIR/bin/start-ds
-    # OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -Djavax.net.debug=all" # For SSL debug
 
     # add proxy-auth privilege
     # enable combined logs
     # keep only 1 file for logs/access to avoid staturating the disk
-    $DIR/bin/dsconfig     -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+    $DIR/bin/dsconfig     --offline --no-prompt --batch <<END_OF_COMMAND_INPUT
+                          set-global-configuration-prop --set "server-id:DJ$IDX-$IDX"       --set group-id:$IDX     --set disabled-privilege:monitor-read
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
-                          create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:808$IDX
+                          create-connection-handler     --type http --handler-name "HTTP"   --set enabled:true --set listen-port:808$IDX
                           set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
                           set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
-                          set-global-configuration-prop --set disabled-privilege:monitor-read
+                          set-synchronization-provider-prop --provider-name "Multimaster synchronization" --set "enabled:true" ${SET_BOOTSTRAP_RSS}
 END_OF_COMMAND_INPUT
+
+    OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
+    $DIR/bin/start-ds
+    # OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -Djavax.net.debug=all" # For SSL debug
 
     # enable debug logs + create debug targets
 #    $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
@@ -227,46 +215,6 @@ END_OF_COMMAND_INPUT
         $DIR/bin/stop-ds
         sleep 2
         OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
-    fi
-
-
-    ###################################
-    # Replication
-    ###################################
-    if [ ${IDX} -ne 0 ]
-    then
-        DSREPLICATION_ENABLE_ARGS=""
-        if [ -n "${IS_DS_ONLY}" ]
-        then
-            DSREPLICATION_ENABLE_ARGS="${DSREPLICATION_ENABLE_ARGS} --noReplicationServer2"
-        elif [ -n "${IS_RS}" ]
-        then
-            DSREPLICATION_ENABLE_ARGS="${DSREPLICATION_ENABLE_ARGS} --replicationPort2 890$IDX"
-            if [ -n "${IS_RS_ONLY}" ]
-            then
-                DSREPLICATION_ENABLE_ARGS="${DSREPLICATION_ENABLE_ARGS} --onlyReplicationServer2"
-            fi
-        fi
-
-        echo
-        echo "##################################################################################################"
-        echo "# Creating replication link: ${REPLICA_DIRS[0]} => ${REPLICA_DIRS[$IDX]}"
-        echo "##################################################################################################"
-#OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
-        $DIR/bin/dsreplication configure \
-                 --adminUID admin --adminPassword $PASSWORD --baseDN "$BASE_DN" --trustAll --no-prompt \
-                 --host1 $HOSTNAME     --port1 4500    --bindDN1 "$BIND_DN" --bindPassword1 $PASSWORD $DSREPLICATION_ENABLE_ARGS_0 \
-                 --host2 $HOSTNAME     --port2 450$IDX --bindDN2 "$BIND_DN" --bindPassword2 $PASSWORD $DSREPLICATION_ENABLE_ARGS
-        echo "Done."
-
-        echo
-        echo "##################################################################################################"
-        echo "# Setting replication group #$IDX for ${REPLICA_DIRS[$IDX]}"
-        echo "##################################################################################################"
-        $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-                          set-global-configuration-prop   --set group-id:$IDX
-
-        echo "Done."
     fi
 done
 
@@ -289,7 +237,7 @@ if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
 #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=y" \
-    $DIR/bin/dsreplication    initialize-all --adminUID admin  -w $PASSWORD \
+    $DIR/bin/dsreplication    initialize-all --adminUID "$BIND_DN"  -w $PASSWORD \
                          -h $HOSTNAME -p 450$IDX -b "$BASE_DN" --trustAll --no-prompt
 fi
 
@@ -312,13 +260,13 @@ exit
 #          --loadBalancingAlgorithm affinity
 
 $DIR/bin/dsconfig     -h $HOSTNAME -p 4500 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
-                              delete-backend                     --backend-name userRoot
+                              delete-backend                     --backend-name appData
                               set-trust-manager-provider-prop    --provider-name "Blind Trust" --set enabled:true
                               create-service-discovery-mechanism --type replication --mechanism-name replication-service  --set replication-server:$HOSTNAME:1501 --set "trust-manager-provider:Blind Trust" \
                                                                  --set bind-dn:"$BIND_DN" --set bind-password:$PASSWORD
                               create-service-discovery-mechanism --type static      --mechanism-name static-service \
                                                                  --set primary-server:$HOSTNAME:1501  --set primary-server:$HOSTNAME:1502
                               create-backend                     --type proxy       --backend-name proxy  --set enabled:true \
-                                                                 --set proxy-user-dn:"$BIND_DN" --set proxy-user-password:$PASSWORD --set route-all:true --set service-discovery-mechanism:replication-service
+                                                                 --set proxy-user-dn:"$BIND_DN" --set proxy-user-password:$PASSWORD --set route-all:true --set shard:replication-service
 END_OF_COMMAND_INPUT
 

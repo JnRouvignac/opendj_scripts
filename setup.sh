@@ -32,6 +32,7 @@ DEBUG_PORT=8000
 BIND_DN="uid=admin"
 PASSWORD=password
 BASE_DN="dc=example,dc=com"
+DEPLOYMENT_KEY=AMsvM_0ZcFmWoyCizHo6SSuWIAFUxnA5CBVN1bkVDAMvhkJAzBthlHVs
 
 
 echo "##################################################################################################"
@@ -64,7 +65,7 @@ echo "##########################################################################
 USE_IMPORT=false
 if [ "${USE_IMPORT}" = false ]
 then
-    SETUP_ARGS="-d 1000"
+    SETUP_ARGS="--profile ds-evaluation --set generatedUsers:1000"
 fi
 
 if [ "${ZIP}" != "${ZIP_2_5_0}" ]
@@ -79,8 +80,7 @@ then
     SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
 fi
 #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
-$SETUP_DIR/setup -h localhost -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" -b "$BASE_DN" $SETUP_ARGS --enableStartTLS -O
-
+$SETUP_DIR/setup -h $HOSTNAME -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" $SETUP_ARGS --enableStartTLS --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD -O
 
 if [ "${USE_IMPORT}" = true ]
 then
@@ -111,7 +111,7 @@ then
 fi
 
 
-$SETUP_DIR/bin/dsconfig  -h $HOSTNAME -p 4444 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
+$SETUP_DIR/bin/dsconfig  -h $HOSTNAME -p "$ADMIN_PORT" -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
                          create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:8080
                          set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
                          set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
