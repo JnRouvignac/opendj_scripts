@@ -80,7 +80,12 @@ then
     SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
 fi
 #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=${DEBUG_PORT},server=y,suspend=n" \
-$SETUP_DIR/setup -h $HOSTNAME -p 1389 -w "$PASSWORD" --adminConnectorPort "$ADMIN_PORT" $SETUP_ARGS --enableStartTLS --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD -O
+$SETUP_DIR/setup -D "$BIND_DN" -w $PASSWORD \
+                 --monitorUserPassword $PASSWORD \
+                 --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD \
+                 -h $HOSTNAME -p 1389 --adminConnectorPort "$ADMIN_PORT" \
+                 $SETUP_ARGS \
+                 --acceptLicense
 
 if [ "${USE_IMPORT}" = true ]
 then
