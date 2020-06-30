@@ -77,7 +77,7 @@ target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w p
 target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  create-debug-target         --publisher-name "File-Based Debug Logger"  --set debug-level:all --type generic --target-name org.opends.server.api
 
 # stats / Performance
-target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=monitor" "(objectClass=*)"
+target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=monitor" -w password -b "cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/modrate    -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
 target/opendj_auto/bin/searchrate -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" *

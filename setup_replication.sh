@@ -160,7 +160,12 @@ do
         SETUP_ARGS="$SETUP_ARGS --cli -n --acceptLicense" # --generateSelfSignedCertificate
     fi
     #OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=y" \
-    $DIR/setup -D "$BIND_DN" -w $PASSWORD -p 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  $SETUP_ARGS --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD --acceptLicense -O
+    $DIR/setup -D "$BIND_DN" -w $PASSWORD \
+               --monitorUserPassword $PASSWORD \
+               --deploymentKey "$DEPLOYMENT_KEY" --deploymentKeyPassword $PASSWORD \
+               --ldapsPort 150$IDX -h $HOSTNAME --adminConnectorPort 450$IDX  \
+               $SETUP_ARGS \
+               --acceptLicense
     if [ "${DATA_INITIALIZED}" = "Use import-ldif" ]
     then
         # import initial data
@@ -187,7 +192,7 @@ do
     # enable combined logs
     # keep only 1 file for logs/access to avoid staturating the disk
     $DIR/bin/dsconfig     --offline --no-prompt --batch <<END_OF_COMMAND_INPUT
-                          set-global-configuration-prop --set "server-id:DJ$IDX-$IDX"       --set group-id:$IDX     --set disabled-privilege:monitor-read
+                          set-global-configuration-prop --set "server-id:${REPLICA_DIRS[$IDX]}"     --set group-id:$IDX     --set disabled-privilege:monitor-read
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
                           create-connection-handler     --type http --handler-name "HTTP"   --set enabled:true --set listen-port:808$IDX
@@ -195,36 +200,25 @@ do
                           set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
 
                           set-synchronization-provider-prop --provider-name "Multimaster synchronization" --set "enabled:true" ${SET_BOOTSTRAP_RSS}
-                          create-replication-domain         --provider-name "Multimaster synchronization" --domain-name "cn=schema" --set "base-dn:cn=schema" --set "enabled:true"
-                          create-replication-domain         --provider-name "Multimaster synchronization" --domain-name "cn=admin data" --set "base-dn:cn=admin data" --set "enabled:true"
 END_OF_COMMAND_INPUT
+
+#    $DIR/bin/dsconfig --offline --no-prompt \
+#                      set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
+#    for CLAZZ in ${DEBUG_TARGETS}
+#    do
+#        $DIR/bin/dsconfig --offline --no-prompt \
+#                          create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
+#    done
 
     OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" \
     $DIR/bin/start-ds
     # OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -Djavax.net.debug=all" # For SSL debug
-
-    # enable debug logs + create debug targets
-#    $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-#                      set-log-publisher-prop        --publisher-name "File-Based Debug Logger" --set enabled:true --set default-debug-level:disabled
-#    for CLAZZ in ${DEBUG_TARGETS}
-#    do
-#        $DIR/bin/dsconfig -h $HOSTNAME -p 450$IDX -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt \
-#                          create-debug-target        --publisher-name "File-Based Debug Logger" --set debug-level:all --set include-throwable-cause:true --type generic --target-name $CLAZZ
-#    done
-
-    if [ -n "${DEBUG_TARGETS}"  -a  ${#DEBUG_TARGETS[@]} -ne 0 ]
-    then
-        # need to restart the server for the debug log changes to take effect. @see OPENDJ-1289
-        $DIR/bin/stop-ds
-        sleep 2
-        OPENDJ_JAVA_ARGS="${OPENDJ_JAVA_ARGS} -agentlib:jdwp=transport=dt_socket,address=800$IDX,server=y,suspend=n" $DIR/bin/start-ds
-    fi
 done
 
-if [ -z "${BUILDING_35X}" ]
-then
-    keytool -list -keystore $TOPOLOGY_TRUSTSTORE -storepass $PASSWORD
-fi
+#if [ -z "${BUILDING_35X}" ]
+#then
+#    keytool -list -keystore $TOPOLOGY_TRUSTSTORE -storepass $PASSWORD
+#fi
 
 # let last node finish startup
 sleep 10
@@ -239,7 +233,7 @@ DIR="$BASE_DIR/${REPLICA_DIRS[$IDX]}"
 if [ ${NB_DS} -gt 1 ]
 then
     # Next command is only useful when there is more than one DS
-    $DIR/bin/dsrepl initialize --bindDn uid=admin -w password -p 4500 -b dc=example,dc=com -b cn=schema -b "cn=admin data" --toAllServers --trustAll --no-prompt
+    $DIR/bin/dsrepl initialize --bindDn uid=admin -w password -p 4500 -b "$BASE_DN" -b "cn=schema" --toAllServers --trustAll --no-prompt
 fi
 
 exit
@@ -263,7 +257,7 @@ exit
 $DIR/bin/dsconfig     -h $HOSTNAME -p 4500 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
                               delete-backend                     --backend-name appData
                               set-trust-manager-provider-prop    --provider-name "Blind Trust" --set enabled:true
-                              create-service-discovery-mechanism --type replication --mechanism-name replication-service  --set replication-server:$HOSTNAME:1501 --set "trust-manager-provider:Blind Trust" \
+                              create-service-discovery-mechanism --type replication --mechanism-name replication-service  --set replication-server:$HOSTNAME:4501 --set "trust-manager-provider:Blind Trust" \
                                                                  --set bind-dn:"$BIND_DN" --set bind-password:$PASSWORD
                               create-service-discovery-mechanism --type static      --mechanism-name static-service \
                                                                  --set primary-server:$HOSTNAME:1501  --set primary-server:$HOSTNAME:1502
