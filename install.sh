@@ -2,7 +2,7 @@
 
 sudo apt install \
 curl \
-docker \
+docker.io \
 firefox \
 kwrite \
 git \
