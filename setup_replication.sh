@@ -200,6 +200,9 @@ do
                           set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
 
                           set-synchronization-provider-prop --provider-name "Multimaster synchronization" --set "enabled:true" ${SET_BOOTSTRAP_RSS}
+                          set-password-policy-prop          --policy-name "Default Password Policy"  --set require-secure-authentication:false
+                          set-access-control-handler-prop   --add global-aci:"(targetattr=\"debugsearchindex\")(version 3.0; acl \"Debug search indexes\"; \
+                                                                               allow (read,search,compare) userdn=\"ldap:///uid=user.0,ou=people,dc=example,dc=com\";)"
 END_OF_COMMAND_INPUT
 
 #    $DIR/bin/dsconfig --offline --no-prompt \
@@ -256,6 +259,7 @@ exit
 
 $DIR/bin/dsconfig     -h $HOSTNAME -p 4500 -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
                               delete-backend                     --backend-name appData
+                              create-trust-manager-provider      --type blind  --provider-name "Blind Trust"  --set enabled:true
                               set-trust-manager-provider-prop    --provider-name "Blind Trust" --set enabled:true
                               create-service-discovery-mechanism --type replication --mechanism-name replication-service  --set replication-server:$HOSTNAME:4501 --set "trust-manager-provider:Blind Trust" \
                                                                  --set bind-dn:"$BIND_DN" --set bind-password:$PASSWORD

@@ -121,6 +121,9 @@ $SETUP_DIR/bin/dsconfig  -h $HOSTNAME -p "$ADMIN_PORT" -D "$BIND_DN" -w $PASSWOR
                          set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
                          set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
                          set-global-configuration-prop --set disabled-privilege:monitor-read
+                         set-password-policy-prop      --policy-name "Default Password Policy"  --set require-secure-authentication:false
+                         set-access-control-handler-prop  --add global-aci:"(targetattr=\"debugsearchindex\")(version 3.0; acl \"Debug search indexes\"; \
+                                                                             allow (read,search,compare) userdn=\"ldap:///uid=user.0,ou=people,dc=example,dc=com\";)"
 END_OF_COMMAND_INPUT
 
 
