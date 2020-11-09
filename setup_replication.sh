@@ -192,7 +192,7 @@ do
     # enable combined logs
     # keep only 1 file for logs/access to avoid staturating the disk
     $DIR/bin/dsconfig     --offline --no-prompt --batch <<END_OF_COMMAND_INPUT
-                          set-global-configuration-prop --set "server-id:${REPLICA_DIRS[$IDX]}"     --set group-id:$IDX     --set disabled-privilege:monitor-read
+                          set-global-configuration-prop --set "server-id:${REPLICA_DIRS[$IDX]}"     --set group-id:${REPLICA_DIRS[$IDX]}     --set disabled-privilege:monitor-read
                           set-log-publisher-prop        --publisher-name "File-Based Access Logger" --set log-format:combined
                           set-log-retention-policy-prop --policy-name "File Count Retention Policy" --set number-of-files:1
                           create-connection-handler     --type http --handler-name "HTTP"   --set enabled:true --set listen-port:808$IDX

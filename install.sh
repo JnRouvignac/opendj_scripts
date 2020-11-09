@@ -1,10 +1,18 @@
 #!/bin/sh
 
+sudo apt autoremove
+
+sudo apt remove \
+thunderbird
+
+# gcc required for building async-profiler
 sudo apt install \
 curl \
 docker.io \
 firefox \
 kwrite \
+gcc \
+g++ \
 git \
 git-cola \
 maven \
@@ -21,6 +29,10 @@ synaptic \
 terminator \
 tree \
 visualvm \
+
+
+# needed for pyforge
+sudo apt install \
 python3 \
 python3-dev \
 gcc \

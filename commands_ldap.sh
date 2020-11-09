@@ -63,7 +63,7 @@ curl "http://bjensen:hifalutin@localhost:8080/api/users/newuser?_prettyPrint=tru
 
 # dsconfig HTTP Connection Handler
 # a bidouiller tools.properties dans le home???
-target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X     --displayCommand --advanced
+target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X     --advanced
 
 target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set enabled:true
 target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w password -X -n  set-connection-handler-prop --handler-name "HTTP Connection Handler"    --set authentication-required:false
@@ -80,7 +80,7 @@ target/opendj_auto/bin/dsconfig --hostname localhost -p 4444 -D "uid=admin" -w p
 target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=monitor" -w password -b "cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/ldapsearch -p 1389 -D "uid=admin" -w password -b "cn=HTTP Connection Handler 0.0.0.0 port 8080 Statistics,cn=monitor" "(objectClass=*)"
 target/opendj_auto/bin/modrate    -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -b "uid=user.{1},ou=people,dc=example,dc=com"  -g "rand(0,1000)" -g "randstr(16)" 'description:{2}'
-target/opendj_auto/bin/searchrate -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" *
+target/opendj_auto/bin/searchrate -p 1500 -D "uid=admin" -w password -F -c 4 -t 4 -s sub -b "ou=People,dc=example,dc=com"     -g "rand(0,1000)" "(uid=user.{1})" "*"
 #target/opendj_auto/bin/modrate   -p 1500 -D "uid=admin" -w password --noRebind --numConnections 4 --numThreads 4 --maxIterations 16  \
 #                                         -b "uid=user.{1},ou=people,dc=example,dc=com" --argument "inc(0,500000)" --argument "randstr(16)" 'description:{2}'
 

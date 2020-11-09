@@ -117,13 +117,16 @@ fi
 
 
 $SETUP_DIR/bin/dsconfig  -h $HOSTNAME -p "$ADMIN_PORT" -D "$BIND_DN" -w $PASSWORD --trustAll --no-prompt --batch <<END_OF_COMMAND_INPUT
-                         create-connection-handler     --type http --handler-name "HTTP" --set enabled:true --set listen-port:8080
-                         set-http-endpoint-prop        --endpoint-name /metrics/prometheus --set authorization-mechanism:HTTP\ Anonymous
-                         set-http-endpoint-prop        --endpoint-name /metrics/api        --set authorization-mechanism:HTTP\ Anonymous
                          set-global-configuration-prop --set disabled-privilege:monitor-read
+                         create-connection-handler     --type http --handler-name "HTTP"        --set enabled:true --set listen-port:8080
+                         set-http-endpoint-prop        --endpoint-name /metrics/prometheus      --set authorization-mechanism:HTTP\ Anonymous
+                         set-http-endpoint-prop        --endpoint-name /metrics/api             --set authorization-mechanism:HTTP\ Anonymous
+                         set-password-policy-prop      --policy-name "Root Password Policy"     --set require-secure-authentication:false
                          set-password-policy-prop      --policy-name "Default Password Policy"  --set require-secure-authentication:false
                          set-access-control-handler-prop  --add global-aci:"(targetattr=\"debugsearchindex\")(version 3.0; acl \"Debug search indexes\"; \
                                                                              allow (read,search,compare) userdn=\"ldap:///uid=user.0,ou=people,dc=example,dc=com\";)"
+                         set-log-publisher-prop        --publisher-name "Json File-Based Access Logger"           --set enabled:false
+                         set-log-publisher-prop        --publisher-name "Filtered Json File-Based Access Logger"  --set enabled:false
 END_OF_COMMAND_INPUT
 
 
